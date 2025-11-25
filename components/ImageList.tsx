@@ -22,7 +22,7 @@ export default function ImageList({ images, onDelete }: Props) {
             style={styles.deleteButton}
             onPress={() => onDelete(uri)}
           >
-            <Text style={styles.deleteText}>Удалить</Text>
+            <Text style={styles.deleteText}>Удалить 🗑️</Text>
           </TouchableOpacity>
         </View>
       ))}

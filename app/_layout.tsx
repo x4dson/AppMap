@@ -1,10 +1,13 @@
 import { Stack } from "expo-router";
-import { MapProvider } from "../components/MapContext";
+import { DatabaseProvider } from "../contexts/DatabaseContext";
+import { MapProvider } from "../contexts/MapContext";
 
 export default function RootLayout() {
   return (
-    <MapProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </MapProvider>
+    <DatabaseProvider>
+      <MapProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </MapProvider>
+    </DatabaseProvider>
   );
 }

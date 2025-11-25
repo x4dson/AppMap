@@ -1,15 +1,22 @@
 import React from "react";
-import { ScrollView, View, Text, Button, StyleSheet } from "react-native";
+import { ScrollView, View, Text, Button, Alert, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import { useMap } from "../../components/MapContext";
+import { useMap } from "../../contexts/MapContext";
 import ImageList from "../../components/ImageList";
 
 export default function MarkerDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { markers, addImagesToMarker, removeImageFromMarker } = useMap();
+  const {
+    markers,
+    addImagesToMarker,
+    removeMarker,
+    removeImageFromMarker,
+    refreshMarkers,
+  } = useMap();
+
   const marker = markers.find((m) => m.id === id);
 
   const addImage = async () => {
@@ -19,7 +26,8 @@ export default function MarkerDetails() {
     });
     if (!result.canceled) {
       const uris = result.assets.map((a) => a.uri);
-      addImagesToMarker(id!, uris);
+      await addImagesToMarker(id!, uris);
+      await refreshMarkers();
     }
   };
 
@@ -31,10 +39,41 @@ export default function MarkerDetails() {
     );
   }
 
+  const handleDeleteMarker = () => {
+    Alert.alert(
+      "Удалить маркер?",
+      "Все связанные фотографии также будут удалены.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Удалить",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await removeMarker(Number(marker.id));
+              router.back();
+            } catch (err) {
+              console.error("Ошибка удаления маркера:", err);
+              Alert.alert("Ошибка", "Не получилось удалить маркер.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Text style={styles.title}>Маркер #{marker.id}</Text>
+
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Маркер #{marker.id}</Text>
+
+          <TouchableOpacity onPress={handleDeleteMarker} style={styles.deleteButton}>
+            <Text style={{ fontSize: 26 }}>🗑️</Text>
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.subtitle}>
           Координаты: {marker.latitude.toFixed(5)}, {marker.longitude.toFixed(5)}
         </Text>
@@ -43,7 +82,10 @@ export default function MarkerDetails() {
 
         <ImageList
           images={marker.images}
-          onDelete={(uri) => removeImageFromMarker(marker.id, uri)}
+          onDelete={async (uri) => {
+            await removeImageFromMarker(marker.id, uri);
+            await refreshMarkers();
+          }}
         />
 
         <Button title="Назад к карте" onPress={() => router.back()} />
@@ -58,17 +100,27 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   scroll: {
-    paddingHorizontal: 16,
+    padding: 16,
     paddingBottom: 40,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
   title: {
-    fontSize: 20,
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 16,
     fontWeight: "bold",
     marginBottom: 10,
   },
-  subtitle: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 10,
+  deleteButton: {
+    padding: 6,
+    backgroundColor: "#EF4444",
+    borderRadius: 12,
   },
 });

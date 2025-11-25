@@ -1,8 +1,7 @@
 import React from "react";
 import MapView, { Marker, MapPressEvent, LongPressEvent } from "react-native-maps";
 import { StyleSheet } from "react-native";
-import { useMap } from "./MapContext";
-
+import { useMap } from "../contexts/MapContext";
 
 export default function Map({ onMarkerPress }: { onMarkerPress: (id: string) => void }) {
   const { markers, addMarker, region, setRegion } = useMap();
